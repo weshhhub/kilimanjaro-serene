@@ -1,23 +1,30 @@
 import { motion } from 'motion/react';
 import { Menu, X, Phone } from 'lucide-react';
 import { useState } from 'react';
+import Button from './ui/Button';
+import { Page } from '../types';
 
-export default function Navbar() {
+interface NavbarProps {
+  onPageChange: (page: Page) => void;
+  currentPage: Page;
+}
+
+export default function Navbar({ onPageChange, currentPage }: NavbarProps) {
   const [isOpen, setIsOpen] = useState(false);
 
-  const navLinks = [
-    { name: 'Home', href: '#' },
-    { name: 'Accommodation', href: '#accommodation' },
-    { name: 'Experiences', href: '#experiences' },
-    { name: 'Activities', href: '#activities' },
-    { name: 'Dining', href: '#dining' },
-    { name: 'Contact', href: '#contact' },
+  const navLinks: { name: string; id: Page }[] = [
+    { name: 'Home', id: 'home' },
+    { name: 'Accommodation', id: 'accommodation' },
+    { name: 'Experiences', id: 'experiences' },
+    { name: 'Activities', id: 'activities' },
+    { name: 'Dining', id: 'dining' },
+    { name: 'Contact', id: 'contact' },
   ];
 
   return (
     <nav className="fixed top-0 left-0 w-full z-50 bg-background/80 backdrop-blur-md border-b border-primary/10">
       <div className="max-w-7xl mx-auto px-6 h-20 flex items-center justify-between">
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 cursor-pointer" onClick={() => onPageChange('home')}>
           <div className="w-10 h-10 bg-primary rounded-full flex items-center justify-center">
             <span className="text-background font-display font-bold text-xl">K</span>
           </div>
@@ -29,18 +36,19 @@ export default function Navbar() {
         {/* Desktop Nav */}
         <div className="hidden md:flex items-center gap-8">
           {navLinks.map((link) => (
-            <a
+            <button
               key={link.name}
-              href={link.href}
-              className="text-sm font-medium hover:text-accent transition-colors uppercase tracking-widest"
+              onClick={() => onPageChange(link.id)}
+              className={`text-sm font-medium transition-colors uppercase tracking-widest ${
+                currentPage === link.id ? 'text-accent' : 'hover:text-accent'
+              }`}
             >
               {link.name}
-            </a>
+            </button>
           ))}
-          <button className="bg-primary text-background px-6 py-2 rounded-full text-sm font-medium hover:bg-primary/90 transition-all flex items-center gap-2">
-            <Phone size={16} />
-            Book Now
-          </button>
+          <Button variant="primary" className="py-2 px-6" icon={Phone} onClick={() => onPageChange('booking')}>
+            Book Your Stay
+          </Button>
         </div>
 
         {/* Mobile Toggle */}
@@ -57,18 +65,25 @@ export default function Navbar() {
           className="md:hidden bg-background border-b border-primary/10 px-6 py-8 flex flex-col gap-6"
         >
           {navLinks.map((link) => (
-            <a
+            <button
               key={link.name}
-              href={link.href}
-              onClick={() => setIsOpen(false)}
-              className="text-lg font-serif hover:text-accent transition-colors"
+              onClick={() => {
+                onPageChange(link.id);
+                setIsOpen(false);
+              }}
+              className={`text-lg font-serif text-left ${
+                currentPage === link.id ? 'text-accent' : 'hover:text-accent'
+              }`}
             >
               {link.name}
-            </a>
+            </button>
           ))}
-          <button className="bg-primary text-background px-6 py-3 rounded-full text-lg font-medium w-full">
+          <Button variant="primary" fullWidth onClick={() => {
+            onPageChange('booking');
+            setIsOpen(false);
+          }}>
             Book Your Stay
-          </button>
+          </Button>
         </motion.div>
       )}
     </nav>

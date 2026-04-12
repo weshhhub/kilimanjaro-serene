@@ -1,6 +1,7 @@
 import { motion } from 'motion/react';
 import { Room } from '../types';
-import { Users, Wifi, Coffee, Maximize } from 'lucide-react';
+import { Users, Wifi, Coffee, Maximize, ArrowRight } from 'lucide-react';
+import Button from './ui/Button';
 
 interface RoomCardProps {
   room: Room;
@@ -54,9 +55,14 @@ export default function RoomCard({ room }: RoomCardProps) {
           ))}
         </div>
         
-        <button className="w-full py-4 border border-primary/20 rounded-full text-sm font-bold uppercase tracking-widest hover:bg-primary hover:text-background transition-all">
-          View Details
-        </button>
+        <div className="flex gap-4">
+          <Button variant="outline" fullWidth className="text-[10px] px-4">
+            View Details
+          </Button>
+          <Button variant="primary" fullWidth className="text-[10px] px-4">
+            Reserve Now
+          </Button>
+        </div>
       </div>
     </motion.div>
   );

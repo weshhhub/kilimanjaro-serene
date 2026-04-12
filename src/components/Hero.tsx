@@ -1,7 +1,13 @@
 import { motion } from 'motion/react';
-import { ChevronDown } from 'lucide-react';
+import { ChevronDown, ArrowRight } from 'lucide-react';
+import Button from './ui/Button';
 
-export default function Hero() {
+interface HeroProps {
+  onBook: () => void;
+  onExplore: () => void;
+}
+
+export default function Hero({ onBook, onExplore }: HeroProps) {
   return (
     <section className="relative h-screen w-full overflow-hidden flex items-center justify-center pt-20">
       {/* Background Image with Parallax-like feel */}
@@ -32,12 +38,12 @@ export default function Hero() {
           </p>
           
           <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
-            <button className="bg-accent text-primary px-10 py-4 rounded-full font-semibold text-lg hover:bg-accent/90 transition-all w-full sm:w-auto">
+            <Button variant="accent" className="px-10 py-4" icon={ArrowRight} onClick={onBook}>
               Book Your Stay
-            </button>
-            <button className="bg-white/10 backdrop-blur-md border border-white/30 text-white px-10 py-4 rounded-full font-semibold text-lg hover:bg-white/20 transition-all w-full sm:w-auto">
+            </Button>
+            <Button variant="outline" className="px-10 py-4 border-white/30 text-white hover:bg-white hover:text-primary" onClick={onExplore}>
               Explore Experiences
-            </button>
+            </Button>
           </div>
         </motion.div>
       </div>

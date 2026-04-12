@@ -23,4 +23,12 @@ export interface Experience {
   image: string;
 }
 
-export type Page = 'home' | 'accommodation' | 'experiences' | 'activities' | 'dining' | 'gallery' | 'contact';
+export interface DiningExperience {
+  id: string;
+  title: string;
+  description: string;
+  image: string;
+  type: 'Location' | 'Meal' | 'Special';
+}
+
+export type Page = 'home' | 'accommodation' | 'experiences' | 'activities' | 'dining' | 'booking' | 'contact';

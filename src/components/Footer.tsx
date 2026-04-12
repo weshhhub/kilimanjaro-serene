@@ -1,11 +1,16 @@
 import { Instagram, Facebook, Twitter, Mail, Phone, MapPin } from 'lucide-react';
+import { Page } from '../types';
 
-export default function Footer() {
+interface FooterProps {
+  onPageChange: (page: Page) => void;
+}
+
+export default function Footer({ onPageChange }: FooterProps) {
   return (
     <footer className="bg-primary text-background pt-24 pb-12 px-6">
       <div className="max-w-7xl mx-auto grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-12 mb-16">
         <div>
-          <div className="flex items-center gap-2 mb-6">
+          <div className="flex items-center gap-2 mb-6 cursor-pointer" onClick={() => onPageChange('home')}>
             <div className="w-10 h-10 bg-accent rounded-full flex items-center justify-center">
               <span className="text-primary font-display font-bold text-xl">K</span>
             </div>
@@ -32,22 +37,22 @@ export default function Footer() {
         <div>
           <h4 className="font-display text-xl mb-6">Quick Links</h4>
           <ul className="space-y-4 text-sm text-background/70">
-            <li><a href="#" className="hover:text-accent transition-colors">Home</a></li>
-            <li><a href="#accommodation" className="hover:text-accent transition-colors">Accommodation</a></li>
-            <li><a href="#experiences" className="hover:text-accent transition-colors">Experiences</a></li>
-            <li><a href="#activities" className="hover:text-accent transition-colors">Activities</a></li>
-            <li><a href="#dining" className="hover:text-accent transition-colors">Dining</a></li>
+            <li><button onClick={() => onPageChange('home')} className="hover:text-accent transition-colors">Home</button></li>
+            <li><button onClick={() => onPageChange('accommodation')} className="hover:text-accent transition-colors">Accommodation</button></li>
+            <li><button onClick={() => onPageChange('experiences')} className="hover:text-accent transition-colors">Experiences</button></li>
+            <li><button onClick={() => onPageChange('activities')} className="hover:text-accent transition-colors">Activities</button></li>
+            <li><button onClick={() => onPageChange('dining')} className="hover:text-accent transition-colors">Dining</button></li>
           </ul>
         </div>
 
         <div>
           <h4 className="font-display text-xl mb-6">Experiences</h4>
           <ul className="space-y-4 text-sm text-background/70">
-            <li><a href="#" className="hover:text-accent transition-colors">Wildlife Safaris</a></li>
-            <li><a href="#" className="hover:text-accent transition-colors">Nature Walks</a></li>
-            <li><a href="#" className="hover:text-accent transition-colors">Lakeside Dining</a></li>
-            <li><a href="#" className="hover:text-accent transition-colors">Corporate Retreats</a></li>
-            <li><a href="#" className="hover:text-accent transition-colors">Family Getaways</a></li>
+            <li><button onClick={() => onPageChange('experiences')} className="hover:text-accent transition-colors">Wildlife Safaris</button></li>
+            <li><button onClick={() => onPageChange('experiences')} className="hover:text-accent transition-colors">Nature Walks</button></li>
+            <li><button onClick={() => onPageChange('dining')} className="hover:text-accent transition-colors">Lakeside Dining</button></li>
+            <li><button onClick={() => onPageChange('activities')} className="hover:text-accent transition-colors">Corporate Retreats</button></li>
+            <li><button onClick={() => onPageChange('activities')} className="hover:text-accent transition-colors">Family Getaways</button></li>
           </ul>
         </div>
 
@@ -71,10 +76,10 @@ export default function Footer() {
       </div>
 
       <div className="max-w-7xl mx-auto pt-12 border-t border-background/10 flex flex-col md:flex-row justify-between items-center gap-6 text-xs text-background/40 uppercase tracking-widest">
-        <p>© 2024 Kilimanjaro Serene Retreat. All Rights Reserved.</p>
+        <p>Crafted for Timeless Experiences — 2026</p>
         <div className="flex gap-8">
-          <a href="#" className="hover:text-accent transition-colors">Privacy Policy</a>
-          <a href="#" className="hover:text-accent transition-colors">Terms of Service</a>
+          <button onClick={() => onPageChange('contact')} className="hover:text-accent transition-colors">Privacy Policy</button>
+          <button onClick={() => onPageChange('contact')} className="hover:text-accent transition-colors">Terms of Service</button>
         </div>
       </div>
     </footer>

@@ -34,7 +34,7 @@ export default function ActivityCard({ activity }: ActivityCardProps) {
           {activity.description}
         </p>
         <div className="flex items-center gap-2 text-accent font-bold text-sm uppercase tracking-widest">
-          Explore Activity <ArrowRight size={16} />
+          Explore Activities <ArrowRight size={16} />
         </div>
       </div>
     </motion.div>
