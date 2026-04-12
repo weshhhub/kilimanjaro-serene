@@ -6,17 +6,22 @@ import Button from './ui/Button';
 interface ActivityDetailsModalProps {
   activity: Activity | null;
   activeStay: Booking | null;
+  bookingData: any | null;
   onClose: () => void;
   onBook: (activity: Activity) => void;
 }
 
-export default function ActivityDetailsModal({ activity, activeStay, onClose, onBook }: ActivityDetailsModalProps) {
+export default function ActivityDetailsModal({ activity, activeStay, bookingData, onClose, onBook }: ActivityDetailsModalProps) {
   if (!activity) return null;
 
   const getButtonText = () => {
-    if (!activeStay) return 'Book Standalone Experience';
-    if (activeStay.isLive) return 'Charge to My Stay';
-    return `Add to ${activeStay.roomTitle} Stay`;
+    if (activeStay) {
+      const isCompleted = !activeStay.isLive && new Date(activeStay.departureDate) < new Date();
+      if (isCompleted) return 'Book Again';
+      if (activeStay.isLive) return 'Charge to My Stay';
+    }
+    if (bookingData) return 'Add to My Stay';
+    return 'Book Experience';
   };
 
   return (

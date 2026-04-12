@@ -4,16 +4,18 @@ import Button from './ui/Button';
 
 interface DiningCardProps {
   item: DiningExperience;
+  onReserve?: (item: DiningExperience) => void;
   key?: string | number;
 }
 
-export default function DiningCard({ item }: DiningCardProps) {
+export default function DiningCard({ item, onReserve }: DiningCardProps) {
   return (
     <motion.div
       initial={{ opacity: 0, y: 20 }}
       whileInView={{ opacity: 1, y: 0 }}
       viewport={{ once: true }}
       className="group relative h-[400px] rounded-3xl overflow-hidden cursor-pointer"
+      onClick={() => onReserve?.(item)}
     >
       <img
         src={item.image}
@@ -30,7 +32,14 @@ export default function DiningCard({ item }: DiningCardProps) {
         <p className="text-white/70 text-sm mb-6 opacity-0 group-hover:opacity-100 transition-opacity duration-500 line-clamp-2">
           {item.description}
         </p>
-        <Button variant="outline" className="text-[10px] px-4 border-white/30 text-white hover:bg-white hover:text-primary">
+        <Button 
+          variant="outline" 
+          className="text-[10px] px-4 border-white/30 text-white hover:bg-white hover:text-primary"
+          onClick={(e) => {
+            e.stopPropagation();
+            onReserve?.(item);
+          }}
+        >
           {item.type === 'Special' ? 'Reserve Experience' : 'View Details'}
         </Button>
       </div>

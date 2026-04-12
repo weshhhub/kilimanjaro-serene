@@ -7,7 +7,7 @@ interface ButtonProps {
   variant?: 'primary' | 'outline' | 'ghost' | 'accent';
   icon?: LucideIcon;
   className?: string;
-  onClick?: () => void;
+  onClick?: (e: any) => void;
   fullWidth?: boolean;
   type?: 'button' | 'submit' | 'reset';
 }

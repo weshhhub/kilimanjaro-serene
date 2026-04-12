@@ -7,6 +7,7 @@ import RoomCard from './components/RoomCard';
 import RoomDetailsModal from './components/RoomDetailsModal';
 import ActivityCard from './components/ActivityCard';
 import ActivityDetailsModal from './components/ActivityDetailsModal';
+import ConciergeModal from './components/ConciergeModal';
 import DiningCard from './components/DiningCard';
 import AdminDashboard from './components/AdminDashboard';
 import BookingBillingForm from './components/BookingBillingForm';
@@ -22,6 +23,8 @@ export default function App() {
   const [currentActivityCategory, setCurrentActivityCategory] = useState<ActivityCategory>('All');
   const [selectedRoom, setSelectedRoom] = useState<Room | null>(null);
   const [selectedActivity, setSelectedActivity] = useState<Activity | null>(null);
+  const [conciergeItem, setConciergeItem] = useState<any>(null);
+  const [isConciergeOpen, setIsConciergeOpen] = useState(false);
   const [bookingData, setBookingData] = useState<{ room: Room; addOns: AddOn[]; activities: Activity[] } | null>(null);
   const [bookings, setBookings] = useState<Booking[]>([]);
   const [activeStay, setActiveStay] = useState<Booking | null>(null);
@@ -51,24 +54,51 @@ export default function App() {
   };
 
   const handleAddActivityToStay = (activity: Activity) => {
-    if (bookingData) {
-      // Adding to upcoming booking
-      setBookingData(prev => prev ? { ...prev, activities: [...prev.activities, activity] } : null);
-      alert(`${activity.title} added to your upcoming ${bookingData.room.title} stay!`);
-    } else if (activeStay) {
-      // Adding to active stay
-      setBookings(prev => prev.map(b => b.id === activeStay.id ? { 
-        ...b, 
-        selectedActivities: [...b.selectedActivities, activity],
-        totalAmount: b.totalAmount + activity.price
-      } : b));
-      alert(`${activity.title} charged to your live ${activeStay.roomTitle} bill.`);
-    } else {
-      // Standalone
-      alert(`Booking ${activity.title} as a standalone experience.`);
-      // In a real app, this would go to a separate checkout
-    }
+    setConciergeItem(activity);
+    setIsConciergeOpen(true);
     setSelectedActivity(null);
+  };
+
+  const handleConciergeAction = (action: 'add-to-stay' | 'standalone' | 'view-accommodation' | 'charge-to-stay') => {
+    if (!conciergeItem) return;
+
+    switch (action) {
+      case 'add-to-stay':
+        if (bookingData) {
+          setBookingData(prev => prev ? { ...prev, activities: [...prev.activities, conciergeItem] } : null);
+          alert(`${conciergeItem.title} added to your upcoming ${bookingData.room.title} stay!`);
+        }
+        break;
+      case 'charge-to-stay':
+        if (activeStay) {
+          const updatedActivities = [...activeStay.selectedActivities, conciergeItem];
+          const updatedTotal = activeStay.totalAmount + (conciergeItem.price || 50);
+          
+          setBookings(prev => prev.map(b => b.id === activeStay.id ? { 
+            ...b, 
+            selectedActivities: updatedActivities,
+            totalAmount: updatedTotal
+          } : b));
+          
+          setActiveStay(prev => prev ? {
+            ...prev,
+            selectedActivities: updatedActivities,
+            totalAmount: updatedTotal
+          } : null);
+          
+          alert(`${conciergeItem.title} charged to your live ${activeStay.roomTitle} bill.`);
+        }
+        break;
+      case 'standalone':
+        alert(`Booking ${conciergeItem.title} as a standalone experience.`);
+        // In a real app, this would redirect to a specific checkout page
+        break;
+      case 'view-accommodation':
+        setCurrentPage('accommodation');
+        break;
+    }
+    setIsConciergeOpen(false);
+    setConciergeItem(null);
   };
 
   const handleCompleteBooking = (booking: Booking) => {
@@ -196,10 +226,10 @@ export default function App() {
                       <ActivityCard 
                         key={activity.id} 
                         activity={activity} 
-                        activeStay={currentStayContext}
+                        activeStay={activeStay}
+                        bookingData={bookingData}
                         onViewDetails={handleViewDetails as any}
-                        onAddToStay={handleAddActivityToStay}
-                        onBookStandalone={() => alert('Booking standalone')}
+                        onBook={handleAddActivityToStay}
                       />
                     ))}
                   </div>
@@ -213,10 +243,10 @@ export default function App() {
                     <ActivityCard 
                       key={activity.id} 
                       activity={activity} 
-                      activeStay={currentStayContext}
+                      activeStay={activeStay}
+                      bookingData={bookingData}
                       onViewDetails={handleViewActivityDetails}
-                      onAddToStay={handleAddActivityToStay}
-                      onBookStandalone={() => alert('Booking standalone')}
+                      onBook={handleAddActivityToStay}
                     />
                   ))}
               </div>
@@ -234,7 +264,14 @@ export default function App() {
                 <h3 className="text-3xl font-display mb-8 border-b border-primary/10 pb-4">Dining Experiences</h3>
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
                   {DINING.filter(d => d.type === 'Location').map((item) => (
-                    <DiningCard key={item.id} item={item} />
+                    <DiningCard 
+                      key={item.id} 
+                      item={item} 
+                      onReserve={(dining) => {
+                        setConciergeItem({ ...dining, price: 50 }); // Default dining price for demo
+                        setIsConciergeOpen(true);
+                      }}
+                    />
                   ))}
                 </div>
               </div>
@@ -261,7 +298,14 @@ export default function App() {
                 <h3 className="text-3xl font-display mb-8 border-b border-primary/10 pb-4">Special Dining Experiences</h3>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                   {DINING.filter(d => d.type === 'Special').map((item) => (
-                    <DiningCard key={item.id} item={item} />
+                    <DiningCard 
+                      key={item.id} 
+                      item={item} 
+                      onReserve={(dining) => {
+                        setConciergeItem({ ...dining, price: 75 }); // Special dining price
+                        setIsConciergeOpen(true);
+                      }}
+                    />
                   ))}
                 </div>
               </div>
@@ -440,9 +484,19 @@ export default function App() {
 
       <ActivityDetailsModal
         activity={selectedActivity}
-        activeStay={currentStayContext}
+        activeStay={activeStay}
+        bookingData={bookingData}
         onClose={() => setSelectedActivity(null)}
         onBook={handleAddActivityToStay}
+      />
+
+      <ConciergeModal
+        isOpen={isConciergeOpen}
+        onClose={() => setIsConciergeOpen(false)}
+        item={conciergeItem}
+        activeStay={activeStay}
+        bookingData={bookingData}
+        onAction={handleConciergeAction}
       />
     </div>
   );

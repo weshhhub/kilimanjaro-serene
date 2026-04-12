@@ -6,32 +6,28 @@ import Button from './ui/Button';
 interface ActivityCardProps {
   activity: Activity;
   activeStay: Booking | null;
+  bookingData: any | null;
   onViewDetails: (activity: Activity) => void;
-  onAddToStay: (activity: Activity) => void;
-  onBookStandalone: (activity: Activity) => void;
+  onBook: (activity: Activity) => void;
   key?: string | number;
 }
 
 export default function ActivityCard({ 
   activity, 
   activeStay, 
+  bookingData,
   onViewDetails, 
-  onAddToStay, 
-  onBookStandalone 
+  onBook
 }: ActivityCardProps) {
   
   const getButtonText = () => {
-    if (!activeStay) return 'Book Experience';
-    if (activeStay.isLive) return 'Charge to My Stay';
-    return `Add to ${activeStay.roomTitle} Stay`;
-  };
-
-  const handleAction = () => {
     if (activeStay) {
-      onAddToStay(activity);
-    } else {
-      onBookStandalone(activity);
+      const isCompleted = !activeStay.isLive && new Date(activeStay.departureDate) < new Date();
+      if (isCompleted) return 'Book Again';
+      if (activeStay.isLive) return 'Charge to My Stay';
     }
+    if (bookingData) return 'Add to My Stay';
+    return 'Book Experience';
   };
 
   return (
@@ -99,7 +95,7 @@ export default function ActivityCard({
             variant="primary" 
             fullWidth 
             className="text-[10px] px-4"
-            onClick={handleAction}
+            onClick={() => onBook(activity)}
           >
             {getButtonText()}
           </Button>
