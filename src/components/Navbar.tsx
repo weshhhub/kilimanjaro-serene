@@ -19,6 +19,7 @@ export default function Navbar({ onPageChange, currentPage }: NavbarProps) {
     { name: 'Activities', id: 'activities' },
     { name: 'Dining', id: 'dining' },
     { name: 'Contact', id: 'contact' },
+    { name: 'Admin', id: 'admin' },
   ];
 
   return (

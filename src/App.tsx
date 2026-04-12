@@ -4,33 +4,124 @@ import Navbar from './components/Navbar';
 import Hero from './components/Hero';
 import SectionHeading from './components/SectionHeading';
 import RoomCard from './components/RoomCard';
+import RoomDetailsModal from './components/RoomDetailsModal';
 import ActivityCard from './components/ActivityCard';
+import ActivityDetailsModal from './components/ActivityDetailsModal';
 import DiningCard from './components/DiningCard';
+import AdminDashboard from './components/AdminDashboard';
+import BookingBillingForm from './components/BookingBillingForm';
 import Footer from './components/Footer';
 import Button from './components/ui/Button';
 import FloatingCTA from './components/FloatingCTA';
 import { ROOMS, ACTIVITIES, EXPERIENCES, DINING } from './constants';
-import { Page } from './types';
-import { Trees, Waves, Mountain, Camera, Heart, Users, ArrowRight, Phone, Utensils, Calendar, MapPin } from 'lucide-react';
+import { Page, Room, AddOn, Booking, PaymentStatus, Activity, ActivityCategory } from './types';
+import { Trees, Waves, Mountain, Camera, Heart, Users, ArrowRight, Phone, Utensils, Calendar, MapPin, LayoutDashboard, Clock, CheckCircle2 } from 'lucide-react';
 
 export default function App() {
   const [currentPage, setCurrentPage] = useState<Page>('home');
+  const [currentActivityCategory, setCurrentActivityCategory] = useState<ActivityCategory>('All');
+  const [selectedRoom, setSelectedRoom] = useState<Room | null>(null);
+  const [selectedActivity, setSelectedActivity] = useState<Activity | null>(null);
+  const [bookingData, setBookingData] = useState<{ room: Room; addOns: AddOn[]; activities: Activity[] } | null>(null);
+  const [bookings, setBookings] = useState<Booking[]>([]);
+  const [activeStay, setActiveStay] = useState<Booking | null>(null);
+
+  const currentStayContext: any = activeStay || (bookingData ? { roomTitle: bookingData.room.title, isLive: false } : null);
 
   // Scroll to top on page change
   useEffect(() => {
     window.scrollTo(0, 0);
-  }, [currentPage]);
+  }, [currentPage, currentActivityCategory]);
+
+  const handleViewDetails = (room: Room) => {
+    setSelectedRoom(room);
+  };
+
+  const handleViewActivityDetails = (activity: Activity) => {
+    setSelectedActivity(activity);
+  };
+
+  const handleReserve = (roomId: string, selectedAddOns: AddOn[]) => {
+    const room = ROOMS.find(r => r.id === roomId);
+    if (room) {
+      setBookingData({ room, addOns: selectedAddOns, activities: [] });
+      setSelectedRoom(null);
+      setCurrentPage('booking');
+    }
+  };
+
+  const handleAddActivityToStay = (activity: Activity) => {
+    if (bookingData) {
+      // Adding to upcoming booking
+      setBookingData(prev => prev ? { ...prev, activities: [...prev.activities, activity] } : null);
+      alert(`${activity.title} added to your upcoming ${bookingData.room.title} stay!`);
+    } else if (activeStay) {
+      // Adding to active stay
+      setBookings(prev => prev.map(b => b.id === activeStay.id ? { 
+        ...b, 
+        selectedActivities: [...b.selectedActivities, activity],
+        totalAmount: b.totalAmount + activity.price
+      } : b));
+      alert(`${activity.title} charged to your live ${activeStay.roomTitle} bill.`);
+    } else {
+      // Standalone
+      alert(`Booking ${activity.title} as a standalone experience.`);
+      // In a real app, this would go to a separate checkout
+    }
+    setSelectedActivity(null);
+  };
+
+  const handleCompleteBooking = (booking: Booking) => {
+    setBookings(prev => [booking, ...prev]);
+    setBookingData(null);
+    // For demo purposes, we'll set this as the active stay if it starts today
+    const today = new Date().toISOString().split('T')[0];
+    if (booking.arrivalDate === today) {
+      setActiveStay({ ...booking, isLive: true });
+    }
+    alert(`Booking Confirmed! Your ID is ${booking.id}. You can view it in the Admin Dashboard.`);
+    setCurrentPage('home');
+  };
+
+  const handleUpdateBookingStatus = (bookingId: string, status: PaymentStatus) => {
+    setBookings(prev => prev.map(b => b.id === bookingId ? { ...b, status } : b));
+  };
 
   const renderPage = () => {
     switch (currentPage) {
       case 'accommodation':
         return (
-          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="pt-32 pb-24 px-6 max-w-7xl mx-auto">
-            <SectionHeading subtitle="Where You Stay" title="Architectural Harmony with Nature" />
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-              {ROOMS.map((room) => (
-                <RoomCard key={room.id} room={room} />
-              ))}
+          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="pt-20">
+            {/* Accommodation Hero */}
+            <div className="relative h-[60vh] flex items-center justify-center overflow-hidden">
+              <img 
+                src="https://picsum.photos/seed/stays/1920/1080" 
+                className="absolute inset-0 w-full h-full object-cover" 
+                referrerPolicy="no-referrer" 
+              />
+              <div className="absolute inset-0 bg-primary/40 backdrop-blur-[2px]" />
+              <div className="relative z-10 text-center px-6">
+                <span className="text-accent uppercase tracking-[0.3em] text-xs font-bold mb-4 block">Our Sanctuaries</span>
+                <h2 className="text-4xl md:text-6xl font-display text-background mb-6">Architectural Harmony <br/> <span className="italic">With Nature</span></h2>
+                <p className="text-background/80 max-w-xl mx-auto mb-8">Choose from our curated selection of luxury stays, each designed to offer a unique perspective of the Amboseli wilderness.</p>
+                <Button variant="accent" icon={ArrowRight} onClick={() => document.getElementById('room-grid')?.scrollIntoView({ behavior: 'smooth' })}>
+                  Explore Stays
+                </Button>
+              </div>
+            </div>
+
+            <div id="room-grid" className="py-24 px-6 max-w-7xl mx-auto">
+              <SectionHeading subtitle="Where You Stay" title="Curated Luxury Stays" />
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                {ROOMS.map((room) => (
+                  <RoomCard 
+                    key={room.id} 
+                    room={room} 
+                    onViewDetails={handleViewDetails}
+                    onReserve={(id) => handleReserve(id, [])}
+                  />
+                ))}
+              </div>
             </div>
           </motion.div>
         );
@@ -55,20 +146,80 @@ export default function App() {
         );
       case 'activities':
         return (
-          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="pt-32 pb-24 px-6 max-w-7xl mx-auto">
-            <SectionHeading subtitle="What You Do" title="Curated for Every Explorer" />
-            
-            <div className="space-y-24">
-              {['Family', 'Corporate', 'Tourist'].map((category) => (
-                <div key={category}>
-                  <h3 className="text-3xl font-display mb-8 border-b border-primary/10 pb-4">{category} Experiences</h3>
+          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="pt-20">
+            {/* Activities Hero */}
+            <div className="relative h-[50vh] flex items-center justify-center overflow-hidden">
+              <img 
+                src="https://picsum.photos/seed/activities/1920/1080" 
+                className="absolute inset-0 w-full h-full object-cover" 
+                referrerPolicy="no-referrer" 
+              />
+              <div className="absolute inset-0 bg-primary/40 backdrop-blur-[2px]" />
+              <div className="relative z-10 text-center px-6">
+                <span className="text-accent uppercase tracking-[0.3em] text-xs font-bold mb-4 block">Our Experiences</span>
+                <h2 className="text-4xl md:text-6xl font-display text-background mb-6">Curated For <br/> <span className="italic">Every Explorer</span></h2>
+                
+                {/* Category Hub */}
+                <div className="flex flex-wrap justify-center gap-4 mt-8">
+                  {['All', 'Family', 'Corporate', 'Tourist'].map((cat) => (
+                    <button
+                      key={cat}
+                      onClick={() => setCurrentActivityCategory(cat as ActivityCategory)}
+                      className={`px-8 py-3 rounded-full text-xs font-bold uppercase tracking-widest transition-all border ${
+                        currentActivityCategory === cat 
+                          ? 'bg-accent border-accent text-primary' 
+                          : 'bg-background/20 border-white/30 text-white hover:bg-background/40'
+                      }`}
+                    >
+                      {cat}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            </div>
+
+            <div className="py-24 px-6 max-w-7xl mx-auto">
+              <SectionHeading 
+                subtitle={currentActivityCategory === 'All' ? "What You Do" : `${currentActivityCategory} Experiences`} 
+                title={currentActivityCategory === 'All' ? "Curated Adventures" : `Discover ${currentActivityCategory} Life`} 
+              />
+              
+              {/* Recommendations based on stay */}
+              {bookingData && currentActivityCategory === 'All' && (
+                <div className="mb-16 p-8 bg-accent/5 rounded-[2.5rem] border border-accent/20">
+                  <div className="flex items-center gap-3 mb-6">
+                    <Heart className="text-accent" />
+                    <h3 className="text-xl font-display">Recommended for your {bookingData.room.title} Stay</h3>
+                  </div>
                   <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-                    {ACTIVITIES.filter(a => a.category === category).map((activity) => (
-                      <ActivityCard key={activity.id} activity={activity} />
+                    {ACTIVITIES.filter(a => a.recommendedFor?.includes(bookingData.room.id)).map((activity) => (
+                      <ActivityCard 
+                        key={activity.id} 
+                        activity={activity} 
+                        activeStay={currentStayContext}
+                        onViewDetails={handleViewDetails as any}
+                        onAddToStay={handleAddActivityToStay}
+                        onBookStandalone={() => alert('Booking standalone')}
+                      />
                     ))}
                   </div>
                 </div>
-              ))}
+              )}
+
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                {ACTIVITIES
+                  .filter(a => currentActivityCategory === 'All' || a.category === currentActivityCategory)
+                  .map((activity) => (
+                    <ActivityCard 
+                      key={activity.id} 
+                      activity={activity} 
+                      activeStay={currentStayContext}
+                      onViewDetails={handleViewActivityDetails}
+                      onAddToStay={handleAddActivityToStay}
+                      onBookStandalone={() => alert('Booking standalone')}
+                    />
+                  ))}
+              </div>
             </div>
           </motion.div>
         );
@@ -119,40 +270,32 @@ export default function App() {
         );
       case 'booking':
         return (
-          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="pt-32 pb-24 px-6 max-w-3xl mx-auto">
+          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="pt-32 pb-24 px-6 max-w-7xl mx-auto">
             <SectionHeading subtitle="Secure Your Stay" title="Begin Your Journey" />
-            <div className="bg-surface p-12 rounded-[3rem] shadow-xl">
-              <form className="space-y-8">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                  <div className="space-y-2">
-                    <label className="text-xs font-bold uppercase tracking-widest text-secondary">Arrival</label>
-                    <input type="date" className="w-full bg-background border border-primary/10 rounded-xl p-4 focus:outline-none focus:border-accent" />
-                  </div>
-                  <div className="space-y-2">
-                    <label className="text-xs font-bold uppercase tracking-widest text-secondary">Departure</label>
-                    <input type="date" className="w-full bg-background border border-primary/10 rounded-xl p-4 focus:outline-none focus:border-accent" />
-                  </div>
-                </div>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                  <div className="space-y-2">
-                    <label className="text-xs font-bold uppercase tracking-widest text-secondary">Guests</label>
-                    <select className="w-full bg-background border border-primary/10 rounded-xl p-4 focus:outline-none focus:border-accent">
-                      <option>1 Guest</option>
-                      <option>2 Guests</option>
-                      <option>3 Guests</option>
-                      <option>4+ Guests</option>
-                    </select>
-                  </div>
-                  <div className="space-y-2">
-                    <label className="text-xs font-bold uppercase tracking-widest text-secondary">Accommodation</label>
-                    <select className="w-full bg-background border border-primary/10 rounded-xl p-4 focus:outline-none focus:border-accent">
-                      {ROOMS.map(r => <option key={r.id}>{r.title}</option>)}
-                    </select>
-                  </div>
-                </div>
-                <Button variant="primary" fullWidth className="py-6 text-lg" icon={ArrowRight}>Confirm Booking</Button>
-              </form>
-            </div>
+            {bookingData ? (
+              <BookingBillingForm 
+                room={bookingData.room} 
+                selectedAddOns={bookingData.addOns} 
+                selectedActivities={bookingData.activities}
+                onComplete={handleCompleteBooking}
+              />
+            ) : (
+              <div className="bg-surface p-12 rounded-[3rem] shadow-xl text-center max-w-2xl mx-auto border border-primary/5">
+                <Calendar className="mx-auto mb-6 text-accent" size={48} />
+                <h3 className="text-2xl font-display mb-4">No Room Selected</h3>
+                <p className="text-secondary mb-8">Please select a room from our accommodation page to begin your booking process.</p>
+                <Button variant="primary" onClick={() => setCurrentPage('accommodation')}>Browse Stays</Button>
+              </div>
+            )}
+          </motion.div>
+        );
+      case 'admin':
+        return (
+          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
+            <AdminDashboard 
+              bookings={bookings} 
+              onUpdateStatus={handleUpdateBookingStatus} 
+            />
           </motion.div>
         );
       case 'contact':
@@ -288,6 +431,19 @@ export default function App() {
 
       <Footer onPageChange={setCurrentPage} />
       <FloatingCTA />
+
+      <RoomDetailsModal 
+        room={selectedRoom} 
+        onClose={() => setSelectedRoom(null)} 
+        onBook={handleReserve} 
+      />
+
+      <ActivityDetailsModal
+        activity={selectedActivity}
+        activeStay={currentStayContext}
+        onClose={() => setSelectedActivity(null)}
+        onBook={handleAddActivityToStay}
+      />
     </div>
   );
 }

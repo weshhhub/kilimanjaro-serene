@@ -5,10 +5,12 @@ import Button from './ui/Button';
 
 interface RoomCardProps {
   room: Room;
+  onViewDetails: (room: Room) => void;
+  onReserve: (roomId: string) => void;
   key?: string | number;
 }
 
-export default function RoomCard({ room }: RoomCardProps) {
+export default function RoomCard({ room, onViewDetails, onReserve }: RoomCardProps) {
   return (
     <motion.div
       initial={{ opacity: 0, y: 30 }}
@@ -56,10 +58,10 @@ export default function RoomCard({ room }: RoomCardProps) {
         </div>
         
         <div className="flex gap-4">
-          <Button variant="outline" fullWidth className="text-[10px] px-4">
+          <Button variant="outline" fullWidth className="text-[10px] px-4" onClick={() => onViewDetails(room)}>
             View Details
           </Button>
-          <Button variant="primary" fullWidth className="text-[10px] px-4">
+          <Button variant="primary" fullWidth className="text-[10px] px-4" onClick={() => onReserve(room.id)}>
             Reserve Now
           </Button>
         </div>

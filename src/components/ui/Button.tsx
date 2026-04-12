@@ -9,6 +9,7 @@ interface ButtonProps {
   className?: string;
   onClick?: () => void;
   fullWidth?: boolean;
+  type?: 'button' | 'submit' | 'reset';
 }
 
 export default function Button({
@@ -18,6 +19,7 @@ export default function Button({
   className = '',
   onClick,
   fullWidth = false,
+  type = 'button',
 }: ButtonProps) {
   const variants = {
     primary: 'bg-primary text-background border-primary hover:bg-transparent hover:text-primary',
@@ -31,6 +33,7 @@ export default function Button({
       whileHover={{ scale: 1.02 }}
       whileTap={{ scale: 0.98 }}
       onClick={onClick}
+      type={type}
       className={`
         relative overflow-hidden px-8 py-4 rounded-full font-bold text-sm uppercase tracking-widest 
         border transition-all duration-300 flex items-center justify-center gap-2
