@@ -26,9 +26,12 @@ export default function DiningCard({ item, onReserve }: DiningCardProps) {
       <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent" />
       
       <div className="absolute bottom-0 left-0 w-full p-8">
-        <h3 className="text-2xl font-display text-white mb-2">
+        <h3 className="text-2xl font-display text-white mb-1">
           {item.title}
         </h3>
+        {item.price && (
+          <p className="text-accent font-bold text-sm mb-2">${item.price}</p>
+        )}
         <p className="text-white/70 text-sm mb-6 opacity-0 group-hover:opacity-100 transition-opacity duration-500 line-clamp-2">
           {item.description}
         </p>

@@ -7,26 +7,38 @@ import RoomCard from './components/RoomCard';
 import RoomDetailsModal from './components/RoomDetailsModal';
 import ActivityCard from './components/ActivityCard';
 import ActivityDetailsModal from './components/ActivityDetailsModal';
+import ExperienceCard from './components/ExperienceCard';
+import ExperienceDetailsModal from './components/ExperienceDetailsModal';
 import ConciergeModal from './components/ConciergeModal';
 import DiningCard from './components/DiningCard';
 import AdminDashboard from './components/AdminDashboard';
 import BookingBillingForm from './components/BookingBillingForm';
+import ExperienceReservationForm from './components/ExperienceReservationForm';
+import ConfirmationPage from './components/ConfirmationPage';
 import Footer from './components/Footer';
 import Button from './components/ui/Button';
 import FloatingCTA from './components/FloatingCTA';
-import { ROOMS, ACTIVITIES, EXPERIENCES, DINING } from './constants';
-import { Page, Room, AddOn, Booking, PaymentStatus, Activity, ActivityCategory } from './types';
+import DiningMenuModal from './components/DiningMenuModal';
+import { ROOMS, ACTIVITIES, EXPERIENCES, DINING, CUISINE_REGIONS, INTERNATIONAL_CUISINE } from './constants';
+import { Page, Room, AddOn, Booking, PaymentStatus, Activity, ActivityCategory, ExperienceBooking, Experience, ExperienceCategory } from './types';
 import { Trees, Waves, Mountain, Camera, Heart, Users, ArrowRight, Phone, Utensils, Calendar, MapPin, LayoutDashboard, Clock, CheckCircle2 } from 'lucide-react';
 
 export default function App() {
   const [currentPage, setCurrentPage] = useState<Page>('home');
   const [currentActivityCategory, setCurrentActivityCategory] = useState<ActivityCategory>('All');
+  const [currentExperienceCategory, setCurrentExperienceCategory] = useState<ExperienceCategory>('All');
   const [selectedRoom, setSelectedRoom] = useState<Room | null>(null);
   const [selectedActivity, setSelectedActivity] = useState<Activity | null>(null);
+  const [selectedExperience, setSelectedExperience] = useState<Experience | null>(null);
+  const [selectedDiningMenu, setSelectedDiningMenu] = useState<{ title: string; description: string; menu: any[]; servingTimes?: string } | null>(null);
   const [conciergeItem, setConciergeItem] = useState<any>(null);
   const [isConciergeOpen, setIsConciergeOpen] = useState(false);
   const [bookingData, setBookingData] = useState<{ room: Room; addOns: AddOn[]; activities: Activity[] } | null>(null);
   const [bookings, setBookings] = useState<Booking[]>([]);
+  const [experienceBookings, setExperienceBookings] = useState<ExperienceBooking[]>([]);
+  const [selectedExperienceForBooking, setSelectedExperienceForBooking] = useState<{ item: any; type: 'Activity' | 'Dining' } | null>(null);
+  const [lastBooking, setLastBooking] = useState<Booking | ExperienceBooking | null>(null);
+  const [lastBookingType, setLastBookingType] = useState<'Stay' | 'Experience' | null>(null);
   const [activeStay, setActiveStay] = useState<Booking | null>(null);
 
   const currentStayContext: any = activeStay || (bookingData ? { roomTitle: bookingData.room.title, isLive: false } : null);
@@ -44,6 +56,10 @@ export default function App() {
     setSelectedActivity(activity);
   };
 
+  const handleViewExperienceDetails = (experience: Experience) => {
+    setSelectedExperience(experience);
+  };
+
   const handleReserve = (roomId: string, selectedAddOns: AddOn[]) => {
     const room = ROOMS.find(r => r.id === roomId);
     if (room) {
@@ -57,6 +73,12 @@ export default function App() {
     setConciergeItem(activity);
     setIsConciergeOpen(true);
     setSelectedActivity(null);
+  };
+
+  const handleAddExperienceToStay = (experience: Experience) => {
+    setConciergeItem(experience);
+    setIsConciergeOpen(true);
+    setSelectedExperience(null);
   };
 
   const handleConciergeAction = (action: 'add-to-stay' | 'standalone' | 'view-accommodation' | 'charge-to-stay') => {
@@ -90,8 +112,15 @@ export default function App() {
         }
         break;
       case 'standalone':
-        alert(`Booking ${conciergeItem.title} as a standalone experience.`);
-        // In a real app, this would redirect to a specific checkout page
+        let expType: 'Activity' | 'Dining' | 'Experience' = 'Experience';
+        if (conciergeItem.type) expType = 'Dining';
+        else if (conciergeItem.group) expType = 'Activity';
+
+        setSelectedExperienceForBooking({ 
+          item: conciergeItem, 
+          type: expType 
+        });
+        setCurrentPage('experience-booking');
         break;
       case 'view-accommodation':
         setCurrentPage('accommodation');
@@ -109,8 +138,17 @@ export default function App() {
     if (booking.arrivalDate === today) {
       setActiveStay({ ...booking, isLive: true });
     }
-    alert(`Booking Confirmed! Your ID is ${booking.id}. You can view it in the Admin Dashboard.`);
-    setCurrentPage('home');
+    setLastBooking(booking);
+    setLastBookingType('Stay');
+    setCurrentPage('confirmation');
+  };
+
+  const handleCompleteExperienceBooking = (booking: ExperienceBooking) => {
+    setExperienceBookings(prev => [booking, ...prev]);
+    setSelectedExperienceForBooking(null);
+    setLastBooking(booking);
+    setLastBookingType('Experience');
+    setCurrentPage('confirmation');
   };
 
   const handleUpdateBookingStatus = (bookingId: string, status: PaymentStatus) => {
@@ -157,20 +195,99 @@ export default function App() {
         );
       case 'experiences':
         return (
-          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="pt-32 pb-24 px-6 max-w-7xl mx-auto">
-            <SectionHeading subtitle="What You Feel" title="Moments That Last a Lifetime" />
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-              {EXPERIENCES.map((exp) => (
-                <div key={exp.id} className="relative h-[500px] rounded-3xl overflow-hidden group">
-                  <img src={exp.image} alt={exp.title} className="w-full h-full object-cover transition-transform duration-1000 group-hover:scale-105" referrerPolicy="no-referrer" />
-                  <div className="absolute inset-0 bg-black/30" />
-                  <div className="absolute bottom-12 left-12 right-12">
-                    <h3 className="text-4xl font-display text-white mb-4">{exp.title}</h3>
-                    <p className="text-white/80 max-w-md mb-6">{exp.description}</p>
-                    <Button variant="outline" className="border-white/30 text-white hover:bg-white hover:text-primary">Explore {exp.title}</Button>
-                  </div>
+          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="pt-20">
+            {/* Experiences Hero */}
+            <div className="relative h-[60vh] flex items-center justify-center overflow-hidden">
+              <img 
+                src="https://picsum.photos/seed/experiences-hero/1920/1080" 
+                className="absolute inset-0 w-full h-full object-cover" 
+                referrerPolicy="no-referrer" 
+              />
+              <div className="absolute inset-0 bg-primary/50 backdrop-blur-[2px]" />
+              <div className="relative z-10 text-center px-6 max-w-4xl">
+                <span className="text-accent uppercase tracking-[0.3em] text-xs font-bold mb-4 block">Moments That Last a Lifetime</span>
+                <h2 className="text-5xl md:text-7xl font-display text-background mb-8 leading-tight">
+                  {currentExperienceCategory === 'All' ? (
+                    <>Curated Luxury <br/> <span className="italic">Offerings</span></>
+                  ) : (
+                    <>{currentExperienceCategory}</>
+                  )}
+                </h2>
+                
+                {currentExperienceCategory !== 'All' && (
+                  <button 
+                    onClick={() => setCurrentExperienceCategory('All')}
+                    className="text-white/60 hover:text-white text-xs font-bold uppercase tracking-widest flex items-center gap-2 mx-auto transition-colors"
+                  >
+                    <ArrowRight size={14} className="rotate-180" />
+                    Back to All Experiences
+                  </button>
+                )}
+              </div>
+            </div>
+
+            <div className="max-w-7xl mx-auto px-6 py-24">
+              {currentExperienceCategory === 'All' ? (
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-12">
+                  {[
+                    { 
+                      id: 'Wildlife Safaris', 
+                      title: 'Wildlife Safaris', 
+                      desc: 'Witness the majestic "Big Tuskers" and diverse wildlife of the Amboseli ecosystem.', 
+                      img: 'https://picsum.photos/seed/safari-hub/1200/800',
+                      btn: 'View Safari Experiences'
+                    },
+                    { 
+                      id: 'Nature Walks', 
+                      title: 'Nature Walks', 
+                      desc: 'Reconnect with the earth through guided walks in our 50-acre indigenous forest.', 
+                      img: 'https://picsum.photos/seed/walk-hub/1200/800',
+                      btn: 'View Nature Walks'
+                    },
+                    { 
+                      id: 'Scenic Views', 
+                      title: 'Scenic Views', 
+                      desc: 'Experience the awe-inspiring presence of Africa\'s highest peak from exclusive vantage points.', 
+                      img: 'https://picsum.photos/seed/view-hub/1200/800',
+                      btn: 'Explore Viewpoints'
+                    },
+                    { 
+                      id: 'Relaxation & Retreat', 
+                      title: 'Relaxation & Retreat', 
+                      desc: 'Find your inner peace with lakeside meditation, spa treatments, and quiet forest retreats.', 
+                      img: 'https://picsum.photos/seed/relax-hub/1200/800',
+                      btn: 'Explore Wellness Experiences'
+                    }
+                  ].map((cat) => (
+                    <div key={cat.id} className="relative h-[500px] rounded-[3rem] overflow-hidden group cursor-pointer" onClick={() => setCurrentExperienceCategory(cat.id as ExperienceCategory)}>
+                      <img src={cat.img} alt={cat.title} className="w-full h-full object-cover transition-transform duration-1000 group-hover:scale-110" referrerPolicy="no-referrer" />
+                      <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent" />
+                      <div className="absolute bottom-12 left-12 right-12">
+                        <h3 className="text-4xl font-display text-white mb-4">{cat.title}</h3>
+                        <p className="text-white/70 max-w-md mb-8 leading-relaxed">{cat.desc}</p>
+                        <Button variant="outline" className="border-white/30 text-white hover:bg-white hover:text-primary px-8">
+                          {cat.btn}
+                        </Button>
+                      </div>
+                    </div>
+                  ))}
                 </div>
-              ))}
+              ) : (
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-12">
+                  {EXPERIENCES
+                    .filter(e => e.category === currentExperienceCategory)
+                    .map((experience) => (
+                      <ExperienceCard 
+                        key={experience.id} 
+                        experience={experience} 
+                        activeStay={activeStay}
+                        bookingData={bookingData}
+                        onViewDetails={handleViewExperienceDetails}
+                        onBook={handleAddExperienceToStay}
+                      />
+                    ))}
+                </div>
+              )}
             </div>
           </motion.div>
         );
@@ -258,17 +375,177 @@ export default function App() {
           <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="pt-32 pb-24 px-6 max-w-7xl mx-auto">
             <SectionHeading subtitle="Where & What You Eat" title="A Culinary Journey in the Wild" />
             
-            <div className="space-y-24">
-              {/* Dining Experiences */}
-              <div>
-                <h3 className="text-3xl font-display mb-8 border-b border-primary/10 pb-4">Dining Experiences</h3>
+            {/* Dining Sub-nav */}
+            <div className="flex justify-center gap-8 mb-20 border-b border-primary/10 pb-6 overflow-x-auto whitespace-nowrap">
+              {[
+                { name: 'Culinary Journey', id: 'local-cuisine' },
+                { name: 'International', id: 'international-cuisine' },
+                { name: 'Daily Rituals', id: 'rituals' },
+                { name: 'Special Experiences', id: 'special' },
+                { name: 'Venues', id: 'venues' }
+              ].map((link) => (
+                <button
+                  key={link.id}
+                  onClick={() => document.getElementById(link.id)?.scrollIntoView({ behavior: 'smooth', block: 'start' })}
+                  className="text-xs font-bold uppercase tracking-widest text-primary/60 hover:text-accent transition-colors"
+                >
+                  {link.name}
+                </button>
+              ))}
+            </div>
+
+            <div className="space-y-32">
+              {/* Culinary Journey Across Kenya */}
+              <div id="local-cuisine" className="scroll-mt-32">
+                <div className="flex flex-col md:flex-row justify-between items-end mb-12 gap-6">
+                  <div className="max-w-2xl">
+                    <div className="flex items-center gap-3 text-accent mb-4">
+                      <Utensils size={20} />
+                      <span className="text-xs font-bold uppercase tracking-[0.3em]">Menus & Cuisine</span>
+                    </div>
+                    <h3 className="text-4xl md:text-5xl font-display text-primary mb-6">Culinary Journey Across Kenya</h3>
+                    <p className="text-secondary text-lg leading-relaxed">
+                      Experience the diverse flavors of Kenya through our curated regional menus. Each dish tells a story of heritage, community, and the rich bounty of our land.
+                    </p>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                  {CUISINE_REGIONS.map((region) => (
+                    <motion.div 
+                      key={region.id}
+                      whileHover={{ y: -10 }}
+                      className="bg-surface rounded-[2.5rem] overflow-hidden border border-primary/5 flex flex-col h-full"
+                    >
+                      <div className="relative h-64 overflow-hidden">
+                        <img src={region.image} alt={region.title} className="w-full h-full object-cover transition-transform duration-700 hover:scale-110" referrerPolicy="no-referrer" />
+                        <div className="absolute top-6 left-6 bg-background/90 backdrop-blur-md px-4 py-2 rounded-full">
+                          <span className="text-[10px] font-bold uppercase tracking-widest text-primary">Regional Specialty</span>
+                        </div>
+                      </div>
+                      <div className="p-8 flex flex-col flex-grow">
+                        <h4 className="text-2xl font-display text-primary mb-4">{region.title}</h4>
+                        <p className="text-secondary text-sm mb-6 leading-relaxed flex-grow">{region.description}</p>
+                        
+                        <div className="flex flex-wrap gap-2 mb-8">
+                          {region.dishes.map((dish, i) => (
+                            <span key={i} className="text-[10px] font-bold uppercase tracking-widest bg-primary/5 text-primary/60 px-3 py-1 rounded-full">
+                              {dish}
+                            </span>
+                          ))}
+                        </div>
+
+                        <div className="space-y-3">
+                          <Button 
+                            variant="primary" 
+                            fullWidth 
+                            onClick={() => {
+                              setSelectedDiningMenu({
+                                title: region.title,
+                                description: region.description,
+                                menu: region.menu
+                              });
+                            }}
+                          >
+                            View Menu
+                          </Button>
+                          <Button 
+                            variant="outline" 
+                            fullWidth 
+                            onClick={() => {
+                              setConciergeItem({ 
+                                id: region.id, 
+                                title: `${region.title} Dining`, 
+                                price: 45 
+                              });
+                              setIsConciergeOpen(true);
+                            }}
+                          >
+                            Reserve Dining
+                          </Button>
+                        </div>
+                      </div>
+                    </motion.div>
+                  ))}
+                </div>
+              </div>
+
+              {/* International Cuisine */}
+              <div id="international-cuisine" className="scroll-mt-32">
+                <div className="flex flex-col md:flex-row justify-between items-end mb-12 gap-6">
+                  <div className="max-w-2xl">
+                    <div className="flex items-center gap-3 text-accent mb-4">
+                      <LayoutDashboard size={20} />
+                      <span className="text-xs font-bold uppercase tracking-[0.3em]">Global Flavors</span>
+                    </div>
+                    <h3 className="text-4xl md:text-5xl font-display text-primary mb-6">International Cuisine</h3>
+                    <p className="text-secondary text-lg leading-relaxed">
+                      A world-class menu featuring global favorites prepared with a luxury twist, using the freshest local and imported ingredients.
+                    </p>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-12">
+                  {INTERNATIONAL_CUISINE.map((item) => (
+                    <div key={item.id} className="flex flex-col md:flex-row gap-8 bg-surface p-8 rounded-[3rem] border border-primary/5">
+                      <div className="w-full md:w-1/2 h-72 rounded-[2rem] overflow-hidden">
+                        <img src={item.image} alt={item.title} className="w-full h-full object-cover" referrerPolicy="no-referrer" />
+                      </div>
+                      <div className="w-full md:w-1/2 flex flex-col justify-center">
+                        <div className="flex items-center gap-2 text-accent mb-4">
+                          <Clock size={14} />
+                          <span className="text-[10px] font-bold uppercase tracking-widest">{item.servingTimes}</span>
+                        </div>
+                        <h4 className="text-2xl font-display text-primary mb-4">{item.title}</h4>
+                        <p className="text-secondary text-sm mb-8 leading-relaxed">{item.description}</p>
+                        
+                        <div className="flex flex-col sm:flex-row gap-3">
+                          <button 
+                            onClick={() => setSelectedDiningMenu({
+                              title: item.title,
+                              description: item.description,
+                              menu: item.menu,
+                              servingTimes: item.servingTimes
+                            })}
+                            className="text-xs font-bold uppercase tracking-widest text-accent hover:underline text-left"
+                          >
+                            View Menu
+                          </button>
+                          <button 
+                            onClick={() => {
+                              setConciergeItem({ 
+                                id: item.id, 
+                                title: item.title, 
+                                price: 65 
+                              });
+                              setIsConciergeOpen(true);
+                            }}
+                            className="text-xs font-bold uppercase tracking-widest text-primary hover:underline text-left"
+                          >
+                            Reserve Dining
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* Premium Dining Experiences */}
+              <div id="special" className="scroll-mt-32">
+                <div className="text-center max-w-3xl mx-auto mb-16">
+                  <h3 className="text-4xl font-display text-primary mb-6">Premium Dining Experiences</h3>
+                  <p className="text-secondary leading-relaxed">
+                    Elevate your stay with our bespoke culinary events, designed to immerse you in the culture and beauty of our surroundings.
+                  </p>
+                </div>
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-                  {DINING.filter(d => d.type === 'Location').map((item) => (
+                  {DINING.filter(d => d.type === 'Special').map((item) => (
                     <DiningCard 
                       key={item.id} 
                       item={item} 
                       onReserve={(dining) => {
-                        setConciergeItem({ ...dining, price: 50 }); // Default dining price for demo
+                        setConciergeItem({ ...dining });
                         setIsConciergeOpen(true);
                       }}
                     />
@@ -276,33 +553,88 @@ export default function App() {
                 </div>
               </div>
 
-              {/* Meals Offered */}
-              <div>
-                <h3 className="text-3xl font-display mb-8 border-b border-primary/10 pb-4">Meals Offered</h3>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                  {DINING.filter(d => d.type === 'Meal').map((item) => (
-                    <div key={item.id} className="flex gap-6 items-center bg-surface p-6 rounded-3xl">
-                      <img src={item.image} className="w-32 h-32 rounded-2xl object-cover" referrerPolicy="no-referrer" />
-                      <div>
-                        <h4 className="text-xl font-display mb-2">{item.title}</h4>
-                        <p className="text-sm text-secondary mb-4">{item.description}</p>
-                        <button className="text-xs font-bold uppercase tracking-widest text-accent hover:underline">View Menu</button>
+              {/* Daily Dining Rituals */}
+              <div id="rituals" className="scroll-mt-32">
+                <div className="text-center max-w-3xl mx-auto mb-16">
+                  <h3 className="text-4xl font-display text-primary mb-6">Daily Dining Rituals</h3>
+                  <p className="text-secondary leading-relaxed">
+                    From the first light of dawn to the quiet of the night, our culinary team prepares a series of rituals to nourish your body and soul.
+                  </p>
+                </div>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+                  {[
+                    { 
+                      title: 'The Sunrise Breakfast', 
+                      time: '06:30 - 10:00', 
+                      desc: 'A vibrant spread of fresh tropical fruits, house-made pastries, and made-to-order Kenyan specialties.',
+                      image: 'https://picsum.photos/seed/breakfast/800/600'
+                    },
+                    { 
+                      title: 'The Midday Oasis', 
+                      time: '12:30 - 15:00', 
+                      desc: 'Light, refreshing lunches featuring garden-fresh salads, grilled proteins, and seasonal soups.',
+                      image: 'https://picsum.photos/seed/lunch/800/600'
+                    },
+                    { 
+                      title: 'The Starlit Dinner', 
+                      time: '19:00 - 22:00', 
+                      desc: 'An elegant multi-course experience celebrating the finest ingredients from our farm and local partners.',
+                      image: 'https://picsum.photos/seed/dinner/800/600'
+                    }
+                  ].map((meal, idx) => (
+                    <div key={idx} className="bg-surface rounded-[2.5rem] overflow-hidden border border-primary/5 group">
+                      <div className="h-48 overflow-hidden">
+                        <img src={meal.image} alt={meal.title} className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" referrerPolicy="no-referrer" />
+                      </div>
+                      <div className="p-8">
+                        <div className="flex items-center gap-2 text-accent mb-3">
+                          <Clock size={14} />
+                          <span className="text-[10px] font-bold uppercase tracking-widest">{meal.time}</span>
+                        </div>
+                        <h4 className="text-xl font-display text-primary mb-3">{meal.title}</h4>
+                        <p className="text-secondary text-sm leading-relaxed">{meal.desc}</p>
                       </div>
                     </div>
                   ))}
                 </div>
               </div>
 
-              {/* Special Dining */}
-              <div>
-                <h3 className="text-3xl font-display mb-8 border-b border-primary/10 pb-4">Special Dining Experiences</h3>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                  {DINING.filter(d => d.type === 'Special').map((item) => (
+              {/* Special Diet Options */}
+              <div className="bg-accent/5 rounded-[3rem] p-12 md:p-20 text-center">
+                <div className="max-w-3xl mx-auto">
+                  <Heart className="text-accent mx-auto mb-6" size={40} />
+                  <h3 className="text-3xl md:text-4xl font-display text-primary mb-6">Nourishing Every Guest</h3>
+                  <p className="text-secondary text-lg mb-10 leading-relaxed">
+                    We believe that luxury dining should be inclusive. Our chefs are experts in preparing delicious Vegan, Gluten-Free, and Halal options that never compromise on flavor or presentation.
+                  </p>
+                  <div className="flex flex-wrap justify-center gap-4">
+                    {['Plant-Based', 'Gluten-Free', 'Halal Certified', 'Nut-Free', 'Dairy-Free'].map((diet, i) => (
+                      <span key={i} className="px-6 py-2 bg-background rounded-full text-xs font-bold uppercase tracking-widest text-primary border border-primary/5">
+                        {diet}
+                      </span>
+                    ))}
+                  </div>
+                  <p className="mt-10 text-sm text-primary/60 italic">
+                    Please inform our concierge of any specific allergies or dietary requirements prior to your arrival.
+                  </p>
+                </div>
+              </div>
+
+              {/* Dining Locations */}
+              <div id="venues" className="scroll-mt-32">
+                <div className="text-center max-w-3xl mx-auto mb-16">
+                  <h3 className="text-4xl font-display text-primary mb-6">Our Dining Venues</h3>
+                  <p className="text-secondary leading-relaxed">
+                    From the elegant main restaurant to intimate forest settings, discover the perfect backdrop for your culinary journey.
+                  </p>
+                </div>
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                  {DINING.filter(d => d.type === 'Location').map((item) => (
                     <DiningCard 
                       key={item.id} 
                       item={item} 
                       onReserve={(dining) => {
-                        setConciergeItem({ ...dining, price: 75 }); // Special dining price
+                        setConciergeItem({ ...dining });
                         setIsConciergeOpen(true);
                       }}
                     />
@@ -333,11 +665,53 @@ export default function App() {
             )}
           </motion.div>
         );
+      case 'experience-booking':
+        return (
+          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="pt-32 pb-24 px-6 max-w-7xl mx-auto">
+            <SectionHeading subtitle="Experience Reservation" title="Book Independently" />
+            {selectedExperienceForBooking ? (
+              <ExperienceReservationForm 
+                item={selectedExperienceForBooking.item} 
+                type={selectedExperienceForBooking.type}
+                onComplete={handleCompleteExperienceBooking}
+              />
+            ) : (
+              <div className="bg-surface p-12 rounded-[3rem] shadow-xl text-center max-w-2xl mx-auto border border-primary/5">
+                <Calendar className="mx-auto mb-6 text-accent" size={48} />
+                <h3 className="text-2xl font-display mb-4">No Experience Selected</h3>
+                <p className="text-secondary mb-8">Please select an activity or dining experience to begin your reservation process.</p>
+                <Button variant="primary" onClick={() => setCurrentPage('activities')}>Browse Activities</Button>
+              </div>
+            )}
+          </motion.div>
+        );
+      case 'confirmation':
+        return (
+          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
+            {lastBooking && lastBookingType ? (
+              <ConfirmationPage 
+                booking={lastBooking} 
+                type={lastBookingType} 
+                onBackHome={() => setCurrentPage('home')}
+                onDownloadInvoice={() => {
+                  // This is handled in AdminDashboard usually, but we can trigger it here too if we want
+                  alert('Invoice download started...');
+                }}
+              />
+            ) : (
+              <div className="pt-32 pb-24 px-6 text-center">
+                <h2 className="text-2xl font-display mb-4">No Recent Reservation</h2>
+                <Button variant="primary" onClick={() => setCurrentPage('home')}>Back to Home</Button>
+              </div>
+            )}
+          </motion.div>
+        );
       case 'admin':
         return (
           <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
             <AdminDashboard 
               bookings={bookings} 
+              experienceBookings={experienceBookings}
               onUpdateStatus={handleUpdateBookingStatus} 
             />
           </motion.div>
@@ -490,6 +864,14 @@ export default function App() {
         onBook={handleAddActivityToStay}
       />
 
+      <ExperienceDetailsModal
+        experience={selectedExperience}
+        activeStay={activeStay}
+        bookingData={bookingData}
+        onClose={() => setSelectedExperience(null)}
+        onBook={handleAddExperienceToStay}
+      />
+
       <ConciergeModal
         isOpen={isConciergeOpen}
         onClose={() => setIsConciergeOpen(false)}
@@ -497,6 +879,15 @@ export default function App() {
         activeStay={activeStay}
         bookingData={bookingData}
         onAction={handleConciergeAction}
+      />
+
+      <DiningMenuModal
+        isOpen={!!selectedDiningMenu}
+        onClose={() => setSelectedDiningMenu(null)}
+        title={selectedDiningMenu?.title || ''}
+        description={selectedDiningMenu?.description || ''}
+        menu={selectedDiningMenu?.menu || []}
+        servingTimes={selectedDiningMenu?.servingTimes}
       />
     </div>
   );

@@ -1,12 +1,12 @@
 import { motion, AnimatePresence } from 'motion/react';
 import { X, Calendar, Home, CreditCard, ArrowRight, Sparkles } from 'lucide-react';
-import { Activity, Booking } from '../types';
+import { Activity, Booking, Experience } from '../types';
 import Button from './ui/Button';
 
 interface ConciergeModalProps {
   isOpen: boolean;
   onClose: () => void;
-  item: Activity | { title: string; price: number; id: string } | null;
+  item: Activity | Experience | { title: string; price: number; id: string } | null;
   activeStay: Booking | null;
   bookingData: any | null;
   onAction: (action: 'add-to-stay' | 'standalone' | 'view-accommodation' | 'charge-to-stay') => void;
@@ -89,7 +89,7 @@ export default function ConciergeModal({
                     fullWidth 
                     onClick={() => onAction('standalone')}
                   >
-                    Book as Separate Experience
+                    Reserve as Separate Experience
                   </Button>
                 </>
               ) : isUpcoming ? (
@@ -107,7 +107,7 @@ export default function ConciergeModal({
                     fullWidth 
                     onClick={() => onAction('standalone')}
                   >
-                    Book as Separate Experience
+                    Reserve as Separate Experience
                   </Button>
                 </>
               ) : isCompleted ? (
@@ -117,7 +117,7 @@ export default function ConciergeModal({
                   icon={ArrowRight}
                   onClick={() => onAction('standalone')}
                 >
-                  Book Again
+                  Reserve Experience
                 </Button>
               ) : (
                 <>
@@ -127,7 +127,7 @@ export default function ConciergeModal({
                     icon={ArrowRight}
                     onClick={() => onAction('standalone')}
                   >
-                    Book as an Experience
+                    Reserve Experience
                   </Button>
                   <Button 
                     variant="outline" 

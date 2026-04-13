@@ -38,11 +38,32 @@ export interface Activity {
   recommendedFor?: string[]; // Room IDs
 }
 
+export type ExperienceCategory = 'All' | 'Wildlife Safaris' | 'Nature Walks' | 'Scenic Views' | 'Relaxation & Retreat';
+
 export interface Experience {
   id: string;
   title: string;
   description: string;
   image: string;
+  category: ExperienceCategory;
+  duration: string;
+  price: number;
+  includes?: string[];
+}
+
+export interface MenuItem {
+  name: string;
+  description?: string;
+  price?: number;
+}
+
+export interface CuisineRegion {
+  id: string;
+  title: string;
+  description: string;
+  image: string;
+  dishes: string[];
+  menu: MenuItem[];
 }
 
 export interface DiningExperience {
@@ -50,7 +71,8 @@ export interface DiningExperience {
   title: string;
   description: string;
   image: string;
-  type: 'Location' | 'Meal' | 'Special';
+  type: 'Location' | 'Meal' | 'Special' | 'Cuisine';
+  price?: number;
 }
 
 export type PaymentStatus = 'Paid' | 'Pending' | 'Cancelled';
@@ -72,5 +94,22 @@ export interface Booking {
   isLive?: boolean; // If stay has started
 }
 
-export type Page = 'home' | 'accommodation' | 'experiences' | 'activities' | 'dining' | 'booking' | 'contact' | 'admin';
+export interface ExperienceBooking {
+  id: string;
+  experienceId: string;
+  experienceTitle: string;
+  experienceType: 'Activity' | 'Dining' | 'Experience';
+  customerName: string;
+  customerEmail: string;
+  customerPhone: string;
+  date: string;
+  time?: string;
+  guests: number;
+  totalAmount: number;
+  status: PaymentStatus;
+  specialRequests?: string;
+  createdAt: string;
+}
+
+export type Page = 'home' | 'accommodation' | 'experiences' | 'activities' | 'dining' | 'booking' | 'experience-booking' | 'confirmation' | 'contact' | 'admin';
 export type ActivityCategory = 'All' | 'Family' | 'Corporate' | 'Tourist';
