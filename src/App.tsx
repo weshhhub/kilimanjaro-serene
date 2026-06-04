@@ -37,7 +37,47 @@ export default function App() {
   const [bookings, setBookings] = useState<Booking[]>(() => {
     try {
       const saved = localStorage.getItem('kilimanjaro_bookings');
-      return saved ? JSON.parse(saved) : [];
+      if (saved) return JSON.parse(saved);
+      // Seed data for the premium experience
+      const seed: Booking[] = [
+        {
+          id: "KSR-8291",
+          roomId: "a-frame",
+          roomTitle: "Signature A-Frame Cabin",
+          customerName: "Audrey Hepburn",
+          customerEmail: "audrey.hepburn@classic.com",
+          arrivalDate: new Date().toISOString().split('T')[0], // today
+          departureDate: new Date(Date.now() + 3 * 24 * 3600 * 1000).toISOString().split('T')[0], // in 3 days
+          guests: 2,
+          selectedAddOns: [
+            { id: "dining", title: "Add Private Dining" },
+            { id: "romantic", title: "Add Romantic Setup" }
+          ],
+          selectedActivities: [],
+          totalAmount: 1150,
+          status: "Paid",
+          createdAt: new Date(Date.now() - 2 * 24 * 3600 * 1000).toISOString(),
+          isLive: true
+        },
+        {
+          id: "KSR-3920",
+          roomId: "lake-villa",
+          roomTitle: "Lakeside Premium Villa",
+          customerName: "David Attenborough",
+          customerEmail: "david@wilderness.org",
+          arrivalDate: new Date(Date.now() + 1 * 24 * 3600 * 1000).toISOString().split('T')[0], // tomorrow
+          departureDate: new Date(Date.now() + 5 * 24 * 3600 * 1000).toISOString().split('T')[0],
+          guests: 1,
+          selectedAddOns: [
+            { id: "walk", title: "Add Guided Nature Walk" }
+          ],
+          selectedActivities: [],
+          totalAmount: 1850,
+          status: "Pending",
+          createdAt: new Date().toISOString()
+        }
+      ];
+      return seed;
     } catch {
       return [];
     }
@@ -45,7 +85,43 @@ export default function App() {
   const [experienceBookings, setExperienceBookings] = useState<ExperienceBooking[]>(() => {
     try {
       const saved = localStorage.getItem('kilimanjaro_experience_bookings');
-      return saved ? JSON.parse(saved) : [];
+      if (saved) return JSON.parse(saved);
+      // Seed experience data with requests requiring immediate action
+      const seed: ExperienceBooking[] = [
+        {
+          id: "EXP-9302",
+          experienceId: "safari-nocturnal",
+          experienceTitle: "Nocturnal Wildlife Safari",
+          experienceType: "Activity",
+          customerName: "Elizabeth Taylor",
+          customerEmail: "elizabeth@taylor.com",
+          customerPhone: "+1 (555) 304-2093",
+          date: new Date(Date.now() + 2 * 24 * 3600 * 1000).toISOString().split('T')[0],
+          time: "19:30 - 22:30",
+          guests: 2,
+          totalAmount: 240,
+          status: "Paid",
+          specialRequests: "Anniversary celebration setup needed. Please pack a bottle of chilled Champagne and let the driver know it is a surprise! Also, Elizabeth has a slight mobility concern, so a low-step vehicle is preferred.",
+          createdAt: new Date(Date.now() - 1 * 24 * 3600 * 1000).toISOString()
+        },
+        {
+          id: "EXP-1042",
+          experienceId: "dining-forestdining",
+          experienceTitle: "Deep Forest Under-the-Stars Fine Dining",
+          experienceType: "Dining",
+          customerName: "George Clooney",
+          customerEmail: "george@clooney.me",
+          customerPhone: "+39 (02) 8302-3920",
+          date: new Date(Date.now() + 3 * 24 * 3600 * 1000).toISOString().split('T')[0],
+          time: "19:00 - 21:30",
+          guests: 2,
+          totalAmount: 180,
+          status: "Pending",
+          specialRequests: "Strict Gluten-Free & Vegetarian dietary restrictions for wife. Prefers water with no ice.",
+          createdAt: new Date(Date.now() - 3 * 3600 * 1000).toISOString()
+        }
+      ];
+      return seed;
     } catch {
       return [];
     }
@@ -65,7 +141,27 @@ export default function App() {
   const [activeStay, setActiveStay] = useState<Booking | null>(() => {
     try {
       const saved = localStorage.getItem('kilimanjaro_active_stay');
-      return saved ? JSON.parse(saved) : null;
+      if (saved) return JSON.parse(saved);
+      // Connect to seed stay of Audrey Hepburn
+      return {
+        id: "KSR-8291",
+        roomId: "a-frame",
+        roomTitle: "Signature A-Frame Cabin",
+        customerName: "Audrey Hepburn",
+        customerEmail: "audrey.hepburn@classic.com",
+        arrivalDate: new Date().toISOString().split('T')[0],
+        departureDate: new Date(Date.now() + 3 * 24 * 3600 * 1000).toISOString().split('T')[0],
+        guests: 2,
+        selectedAddOns: [
+          { id: "dining", title: "Add Private Dining" },
+          { id: "romantic", title: "Add Romantic Setup" }
+        ],
+        selectedActivities: [],
+        totalAmount: 1150,
+        status: "Paid",
+        createdAt: new Date(Date.now() - 2 * 24 * 3600 * 1000).toISOString(),
+        isLive: true
+      };
     } catch {
       return null;
     }
@@ -219,7 +315,16 @@ export default function App() {
   };
 
   const handleUpdateBookingStatus = (bookingId: string, status: PaymentStatus) => {
-    setBookings(prev => prev.map(b => b.id === bookingId ? { ...b, status } : b));
+    const isStay = bookings.some(b => b.id === bookingId);
+    if (isStay) {
+      setBookings(prev => prev.map(b => b.id === bookingId ? { ...b, status } : b));
+      // Update active stay also if it corresponds
+      if (activeStay?.id === bookingId) {
+        setActiveStay(prev => prev ? { ...prev, status } : null);
+      }
+    } else {
+      setExperienceBookings(prev => prev.map(b => b.id === bookingId ? { ...b, status } : b));
+    }
   };
 
   const renderPage = () => {
