@@ -77,9 +77,11 @@ export default function Footer({ onPageChange }: FooterProps) {
 
       <div className="max-w-7xl mx-auto pt-12 border-t border-background/10 flex flex-col md:flex-row justify-between items-center gap-6 text-xs text-background/40 uppercase tracking-widest">
         <p>Crafted for Timeless Experiences — 2026</p>
-        <div className="flex gap-8">
+        <div className="flex gap-6 items-center">
           <button onClick={() => onPageChange('contact')} className="hover:text-accent transition-colors">Privacy Policy</button>
           <button onClick={() => onPageChange('contact')} className="hover:text-accent transition-colors">Terms of Service</button>
+          <span className="text-background/20">|</span>
+          <button onClick={() => onPageChange('admin')} className="hover:text-accent transition-colors text-background/60 font-semibold lowercase first-letter:uppercase">Staff Portal</button>
         </div>
       </div>
     </footer>

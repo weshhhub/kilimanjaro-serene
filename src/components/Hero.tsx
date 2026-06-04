@@ -13,7 +13,7 @@ export default function Hero({ onBook, onExplore }: HeroProps) {
       {/* Background Image with Parallax-like feel */}
       <div className="absolute inset-0 z-0">
         <img
-          src="https://picsum.photos/seed/kilimanjaro/1920/1080"
+          src="/images/hero-kilimanjaro.jpg"
           alt="Mount Kilimanjaro View"
           className="w-full h-full object-cover"
           referrerPolicy="no-referrer"

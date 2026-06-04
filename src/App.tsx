@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, FormEvent } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import Navbar from './components/Navbar';
 import Hero from './components/Hero';
@@ -34,12 +34,42 @@ export default function App() {
   const [conciergeItem, setConciergeItem] = useState<any>(null);
   const [isConciergeOpen, setIsConciergeOpen] = useState(false);
   const [bookingData, setBookingData] = useState<{ room: Room; addOns: AddOn[]; activities: Activity[] } | null>(null);
-  const [bookings, setBookings] = useState<Booking[]>([]);
-  const [experienceBookings, setExperienceBookings] = useState<ExperienceBooking[]>([]);
+  const [bookings, setBookings] = useState<Booking[]>(() => {
+    try {
+      const saved = localStorage.getItem('kilimanjaro_bookings');
+      return saved ? JSON.parse(saved) : [];
+    } catch {
+      return [];
+    }
+  });
+  const [experienceBookings, setExperienceBookings] = useState<ExperienceBooking[]>(() => {
+    try {
+      const saved = localStorage.getItem('kilimanjaro_experience_bookings');
+      return saved ? JSON.parse(saved) : [];
+    } catch {
+      return [];
+    }
+  });
+  const [isAdminAuthenticated, setIsAdminAuthenticated] = useState<boolean>(() => {
+    try {
+      return localStorage.getItem('kilimanjaro_admin_logged') === 'true';
+    } catch {
+      return false;
+    }
+  });
+  const [adminPasscode, setAdminPasscode] = useState('');
+  const [adminPasscodeError, setAdminPasscodeError] = useState('');
   const [selectedExperienceForBooking, setSelectedExperienceForBooking] = useState<{ item: any; type: 'Activity' | 'Dining' } | null>(null);
   const [lastBooking, setLastBooking] = useState<Booking | ExperienceBooking | null>(null);
   const [lastBookingType, setLastBookingType] = useState<'Stay' | 'Experience' | null>(null);
-  const [activeStay, setActiveStay] = useState<Booking | null>(null);
+  const [activeStay, setActiveStay] = useState<Booking | null>(() => {
+    try {
+      const saved = localStorage.getItem('kilimanjaro_active_stay');
+      return saved ? JSON.parse(saved) : null;
+    } catch {
+      return null;
+    }
+  });
 
   const currentStayContext: any = activeStay || (bookingData ? { roomTitle: bookingData.room.title, isLive: false } : null);
 
@@ -47,6 +77,43 @@ export default function App() {
   useEffect(() => {
     window.scrollTo(0, 0);
   }, [currentPage, currentActivityCategory]);
+
+  // Synchronize bookings with localStorage
+  useEffect(() => {
+    try {
+      localStorage.setItem('kilimanjaro_bookings', JSON.stringify(bookings));
+    } catch (e) {
+      console.error(e);
+    }
+  }, [bookings]);
+
+  useEffect(() => {
+    try {
+      localStorage.setItem('kilimanjaro_experience_bookings', JSON.stringify(experienceBookings));
+    } catch (e) {
+      console.error(e);
+    }
+  }, [experienceBookings]);
+
+  useEffect(() => {
+    try {
+      localStorage.setItem('kilimanjaro_admin_logged', String(isAdminAuthenticated));
+    } catch (e) {
+      console.error(e);
+    }
+  }, [isAdminAuthenticated]);
+
+  useEffect(() => {
+    try {
+      if (activeStay) {
+        localStorage.setItem('kilimanjaro_active_stay', JSON.stringify(activeStay));
+      } else {
+        localStorage.removeItem('kilimanjaro_active_stay');
+      }
+    } catch (e) {
+      console.error(e);
+    }
+  }, [activeStay]);
 
   const handleViewDetails = (room: Room) => {
     setSelectedRoom(room);
@@ -163,7 +230,7 @@ export default function App() {
             {/* Accommodation Hero */}
             <div className="relative h-[60vh] flex items-center justify-center overflow-hidden">
               <img 
-                src="https://picsum.photos/seed/stays/1920/1080" 
+                src="/images/hero-stays.jpg" 
                 className="absolute inset-0 w-full h-full object-cover" 
                 referrerPolicy="no-referrer" 
               />
@@ -199,7 +266,7 @@ export default function App() {
             {/* Experiences Hero */}
             <div className="relative h-[60vh] flex items-center justify-center overflow-hidden">
               <img 
-                src="https://picsum.photos/seed/experiences-hero/1920/1080" 
+                src="/images/hero-experiences.jpg" 
                 className="absolute inset-0 w-full h-full object-cover" 
                 referrerPolicy="no-referrer" 
               />
@@ -234,28 +301,28 @@ export default function App() {
                       id: 'Wildlife Safaris', 
                       title: 'Wildlife Safaris', 
                       desc: 'Witness the majestic "Big Tuskers" and diverse wildlife of the Amboseli ecosystem.', 
-                      img: 'https://picsum.photos/seed/safari-hub/1200/800',
+                      img: '/images/experience-safari-hub.jpg',
                       btn: 'View Safari Experiences'
                     },
                     { 
                       id: 'Nature Walks', 
                       title: 'Nature Walks', 
                       desc: 'Reconnect with the earth through guided walks in our 50-acre indigenous forest.', 
-                      img: 'https://picsum.photos/seed/walk-hub/1200/800',
+                      img: '/images/experience-walk-hub.jpg',
                       btn: 'View Nature Walks'
                     },
                     { 
                       id: 'Scenic Views', 
                       title: 'Scenic Views', 
                       desc: 'Experience the awe-inspiring presence of Africa\'s highest peak from exclusive vantage points.', 
-                      img: 'https://picsum.photos/seed/view-hub/1200/800',
+                      img: '/images/experience-view-hub.jpg',
                       btn: 'Explore Viewpoints'
                     },
                     { 
                       id: 'Relaxation & Retreat', 
                       title: 'Relaxation & Retreat', 
                       desc: 'Find your inner peace with lakeside meditation, spa treatments, and quiet forest retreats.', 
-                      img: 'https://picsum.photos/seed/relax-hub/1200/800',
+                      img: '/images/experience-relax-hub.jpg',
                       btn: 'Explore Wellness Experiences'
                     }
                   ].map((cat) => (
@@ -297,7 +364,7 @@ export default function App() {
             {/* Activities Hero */}
             <div className="relative h-[50vh] flex items-center justify-center overflow-hidden">
               <img 
-                src="https://picsum.photos/seed/activities/1920/1080" 
+                src="/images/hero-activities.jpg" 
                 className="absolute inset-0 w-full h-full object-cover" 
                 referrerPolicy="no-referrer" 
               />
@@ -567,19 +634,19 @@ export default function App() {
                       title: 'The Sunrise Breakfast', 
                       time: '06:30 - 10:00', 
                       desc: 'A vibrant spread of fresh tropical fruits, house-made pastries, and made-to-order Kenyan specialties.',
-                      image: 'https://picsum.photos/seed/breakfast/800/600'
+                      image: '/images/ritual-breakfast.jpg'
                     },
                     { 
                       title: 'The Midday Oasis', 
                       time: '12:30 - 15:00', 
                       desc: 'Light, refreshing lunches featuring garden-fresh salads, grilled proteins, and seasonal soups.',
-                      image: 'https://picsum.photos/seed/lunch/800/600'
+                      image: '/images/ritual-lunch.jpg'
                     },
                     { 
                       title: 'The Starlit Dinner', 
                       time: '19:00 - 22:00', 
                       desc: 'An elegant multi-course experience celebrating the finest ingredients from our farm and local partners.',
-                      image: 'https://picsum.photos/seed/dinner/800/600'
+                      image: '/images/ritual-dinner.jpg'
                     }
                   ].map((meal, idx) => (
                     <div key={idx} className="bg-surface rounded-[2.5rem] overflow-hidden border border-primary/5 group">
@@ -706,9 +773,94 @@ export default function App() {
             )}
           </motion.div>
         );
-      case 'admin':
+      case 'admin': {
+        const handleValidatePasscode = (e: FormEvent) => {
+          e.preventDefault();
+          if (adminPasscode === '2026' || adminPasscode === '1234' || adminPasscode.toLowerCase() === 'admin') {
+            setIsAdminAuthenticated(true);
+            setAdminPasscodeError('');
+            setAdminPasscode('');
+          } else {
+            setAdminPasscodeError('Invalid staff passcode. Access Denied.');
+          }
+        };
+
+        if (!isAdminAuthenticated) {
+          return (
+            <motion.div 
+              initial={{ opacity: 0, y: 30 }} 
+              animate={{ opacity: 1, y: 0 }} 
+              exit={{ opacity: 0, y: -30 }} 
+              className="pt-32 pb-24 px-6 max-w-md mx-auto min-h-[80vh] flex flex-col justify-center"
+            >
+              <div className="bg-surface p-10 rounded-[3rem] border border-primary/10 shadow-2xl text-center">
+                <div className="w-16 h-16 bg-accent/10 text-accent rounded-full flex items-center justify-center mx-auto mb-6">
+                  <LayoutDashboard size={32} />
+                </div>
+                <h3 className="text-3xl font-display text-primary mb-3">Staff Portal</h3>
+                <p className="text-secondary text-sm mb-8 leading-relaxed">
+                  Security credentials required. Enter the 4-digit staff passcode to access bookings and guest logs.
+                </p>
+                
+                <form onSubmit={handleValidatePasscode} className="space-y-4">
+                  <div className="relative">
+                    <input 
+                      type="password"
+                      placeholder="Enter Passcode..." 
+                      value={adminPasscode}
+                      onChange={(e) => {
+                        setAdminPasscode(e.target.value);
+                        if (adminPasscodeError) setAdminPasscodeError('');
+                      }}
+                      className="w-full bg-background border border-primary/15 rounded-xl p-4 text-center font-mono tracking-widest text-lg focus:outline-none focus:border-accent"
+                      required
+                    />
+                  </div>
+                  {adminPasscodeError && (
+                    <p className="text-xs text-red-500 font-semibold mb-2">{adminPasscodeError}</p>
+                  )}
+                  <Button type="submit" variant="primary" fullWidth>
+                    Verify Passcode
+                  </Button>
+                </form>
+
+                <div className="mt-8 pt-6 border-t border-primary/5">
+                  <p className="text-[10px] text-primary/40 leading-relaxed">
+                    DEVELOPER NOTICE:<br />
+                    Use PIN passcode <strong className="text-secondary">2026</strong> or <strong className="text-secondary">1234</strong> to simulate actual hotel desk operations authorization.
+                  </p>
+                </div>
+                
+                <button 
+                  onClick={() => setCurrentPage('home')} 
+                  className="mt-6 text-xs font-bold uppercase tracking-widest text-primary/40 hover:text-accent transition-colors block mx-auto"
+                >
+                  Return to Main Website
+                </button>
+              </div>
+            </motion.div>
+          );
+        }
+
         return (
           <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
+            <div className="bg-primary/5 py-4 px-6 border-b border-primary/10 pt-24">
+              <div className="max-w-7xl mx-auto flex justify-between items-center">
+                <span className="text-xs font-bold uppercase tracking-widest text-accent flex items-center gap-2">
+                  <span className="w-2 h-2 rounded-full bg-accent animate-pulse"></span>
+                  Authorized Staff Session
+                </span>
+                <button 
+                  onClick={() => {
+                    setIsAdminAuthenticated(false);
+                    setCurrentPage('home');
+                  }}
+                  className="text-xs font-bold uppercase tracking-widest text-primary/60 hover:text-red-600 transition-colors"
+                >
+                  Sign Out
+                </button>
+              </div>
+            </div>
             <AdminDashboard 
               bookings={bookings} 
               experienceBookings={experienceBookings}
@@ -716,6 +868,7 @@ export default function App() {
             />
           </motion.div>
         );
+      }
       case 'contact':
         return (
           <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="pt-32 pb-24 px-6 max-w-7xl mx-auto">
@@ -760,10 +913,10 @@ export default function App() {
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-20 items-center">
                 <motion.div initial={{ opacity: 0, x: -50 }} whileInView={{ opacity: 1, x: 0 }} viewport={{ once: true }} className="relative">
                   <div className="aspect-[4/5] rounded-3xl overflow-hidden">
-                    <img src="https://picsum.photos/seed/forest/800/1000" alt="Forest Sanctuary" className="w-full h-full object-cover" referrerPolicy="no-referrer" />
+                    <img src="/images/about-forest.jpg" alt="Forest Sanctuary" className="w-full h-full object-cover" referrerPolicy="no-referrer" />
                   </div>
                   <div className="absolute -bottom-10 -right-10 w-64 h-64 rounded-3xl overflow-hidden border-8 border-background hidden md:block">
-                    <img src="https://picsum.photos/seed/wildlife2/400/400" alt="Wildlife" className="w-full h-full object-cover" referrerPolicy="no-referrer" />
+                    <img src="/images/about-wildlife.jpg" alt="Wildlife" className="w-full h-full object-cover" referrerPolicy="no-referrer" />
                   </div>
                 </motion.div>
 
@@ -820,7 +973,7 @@ export default function App() {
             {/* CTA Section */}
             <section className="py-24 px-6">
               <div className="max-w-7xl mx-auto relative rounded-[3rem] overflow-hidden h-[500px] flex items-center justify-center text-center">
-                <img src="https://picsum.photos/seed/cta/1920/800" alt="Call to action" className="absolute inset-0 w-full h-full object-cover" referrerPolicy="no-referrer" />
+                <img src="/images/cta-bg.jpg" alt="Call to action" className="absolute inset-0 w-full h-full object-cover" referrerPolicy="no-referrer" />
                 <div className="absolute inset-0 bg-primary/60" />
                 <div className="relative z-10 px-6">
                   <h2 className="text-4xl md:text-6xl font-display text-background mb-8 leading-tight">Ready to Start Your <span className="italic">Safari Experience?</span></h2>
